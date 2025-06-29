@@ -1,0 +1,86 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DIRECT_URL")
+}
+
+model user {
+  id             String    @id @default(uuid())
+  email          String    @unique
+  fullName       String
+  profileImageUrl String?
+  friends        friend[]  @relation("UserFriends")
+  friendOf       friend[]  @relation("FriendUsers")
+  posts          post[]    @relation("UserPosts")
+  messagesSent   message[] @relation("MessagesSent")
+  messagesReceived message[] @relation("MessagesReceived")
+  trees          tree[]
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+}
+
+model friend {
+  id        String   @id @default(uuid())
+  user      user     @relation("UserFriends", fields: [userId], references: [id])
+  userId    String
+  friend    user     @relation("FriendUsers", fields: [friendId], references: [id])
+  friendId  String
+  status    String   // e.g., "pending", "accepted", "blocked"
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, friendId])
+}
+
+model post {
+  id          String   @id @default(uuid())
+  user        user     @relation("UserPosts", fields: [userId], references: [id])
+  userId      String
+  userName    String
+  userInitial String
+  content     String
+  location    String? 
+  imageUrl    String?
+  likes       Int      @default(0)
+  comments    Int      @default(0)
+  shares      Int      @default(0)
+  badge       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model message {
+  id          String   @id @default(uuid())
+  sender      user     @relation("MessagesSent", fields: [senderId], references: [id])
+  senderId    String
+  receiver    user     @relation("MessagesReceived", fields: [receiverId], references: [id])
+  receiverId  String
+  content     String
+  createdAt   DateTime @default(now())
+  read        Boolean  @default(false)
+}
+
+model event {
+  id        String   @id @default(uuid())
+  title     String
+  date      DateTime
+  location  String
+  attending Int      @default(0)
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model tree {
+  id        String   @id @default(uuid())
+  name      String
+  species   String
+  plantedAt DateTime
+  user      user     @relation(fields: [userId], references: [id])
+  userId    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
