@@ -67,7 +67,9 @@ export default function DashboardPage() {
         console.log('Fetched user trees:', data);
 
         // Since location is not a field, we can count unique species or just count trees
-        const uniqueSpecies = new Set(data.map((t) => t.species));
+        const uniqueSpecies = new Set(
+          data.map((t: { species: string }) => t.species)
+        );
         setTreeCount(data.length);
         setLocationCount(uniqueSpecies.size);
 
