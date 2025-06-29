@@ -11,7 +11,7 @@ export default function PlantingPage() {
 
   const [form, setForm] = useState({
     tree_name: '',
-    location: '',
+    species: '',
     date_planted: '',
   });
 
@@ -22,29 +22,43 @@ export default function PlantingPage() {
   };
 
   const handleSubmit = async () => {
-    if (!user) return;
+    if (!user) {
+      console.error('No user found');
+      return;
+    }
 
     setLoading(true);
 
-    const response = await supabase.from('tree').insert([
-      {
-        userId: user.id,
-        name: form.tree_name,
-        species: form.location,
-        plantedAt: form.date_planted,
-      },
-    ]);
-    console.log('Insert response:', response);
-    const { error } = response;
+    const insertData = {
+      name: form.tree_name,
+      species: form.species,
+      plantedAt: form.date_planted,
+    };
 
-    setLoading(false);
+    console.log('Sending data to API:', insertData);
 
-    if (error) {
-      alert('Failed to save: ' + JSON.stringify(error));
-      console.error('Insert error:', error);
-    } else {
-      alert('Tree planted successfully! 🌱');
-      router.push('/dashboard');
+    try {
+      const res = await fetch('/api/trees', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(insertData),
+      });
+
+      if (!res.ok) {
+        const errorData = await res.json();
+        alert('Failed to save: ' + JSON.stringify(errorData));
+        console.error('API error:', errorData);
+      } else {
+        alert('Tree planted successfully! 🌱');
+        router.push('/dashboard');
+      }
+    } catch (error) {
+      alert('Failed to save: ' + error);
+      console.error('Fetch error:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -70,11 +84,11 @@ export default function PlantingPage() {
             placeholder="e.g., Hope Tree"
           />
           <Input
-            label="Location"
-            name="location"
-            value={form.location}
+            label="Species"
+            name="species"
+            value={form.species}
             onChange={handleChange}
-            placeholder="e.g., Barangay 1, Cavite"
+            placeholder="e.g., Quercus agrifolia"
           />
           <Input
             label="Date Planted"
@@ -93,9 +107,12 @@ export default function PlantingPage() {
           </button>
         </div>
       </div>
+      <TreeList />
     </div>
   );
 }
+
+import TreeList from './TreeList';
 
 function Input({
   label,

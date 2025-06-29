@@ -11,6 +11,7 @@ export default function DashboardPage() {
   const [treeCount, setTreeCount] = useState<number | null>(null);
   const [locationCount, setLocationCount] = useState<number | null>(null);
   const [badgeCount, setBadgeCount] = useState(2); // placeholder
+  const [communityTreeCount, setCommunityTreeCount] = useState<number | null>(null);
 
   // Array of tips to cycle through
   const tips = [
@@ -39,24 +40,60 @@ export default function DashboardPage() {
   const [currentTipIndex, setCurrentTipIndex] = useState(0);
 
   useEffect(() => {
+    console.log('Dashboard useEffect triggered, user:', user);
     if (!user) return;
 
-      const fetchData = async () => {
-        const { data, error } = await supabase
-          .from('tree')
-          .select('id, name, species, plantedAt')
-          .eq('userId', user.id);
+    const fetchData = async () => {
+      console.log('Fetching tree data for user:', user.id);
+      try {
+        const res = await fetch('/api/trees', {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
 
-        if (error) {
-          console.error('Error fetching trees:', error.message);
+        if (!res.ok) {
+          const errorData = await res.json();
+          console.error('API error fetching trees:', errorData);
+          setTreeCount(null);
+          setLocationCount(null);
+          setCommunityTreeCount(null);
           return;
         }
+
+        const data = await res.json();
+
+        console.log('Fetched user trees:', data);
 
         // Since location is not a field, we can count unique species or just count trees
         const uniqueSpecies = new Set(data.map((t) => t.species));
         setTreeCount(data.length);
         setLocationCount(uniqueSpecies.size);
-      };
+
+        // Fetch total trees planted by all users for community goal
+        const countRes = await fetch('/api/trees?community=true', {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
+
+        if (!countRes.ok) {
+          const errorData = await countRes.json();
+          console.error('API error fetching community tree count:', errorData);
+          setCommunityTreeCount(null);
+        } else {
+          const countData = await countRes.json();
+          setCommunityTreeCount(countData.count);
+        }
+      } catch (error) {
+        console.error('Error fetching trees:', error);
+        setTreeCount(null);
+        setLocationCount(null);
+        setCommunityTreeCount(null);
+      }
+    };
 
     fetchData();
   }, [user]);
@@ -190,17 +227,17 @@ export default function DashboardPage() {
         <div className="w-full bg-gradient-to-r from-green-200 to-green-100 rounded-full h-6 shadow-inner relative overflow-hidden">
           <motion.div
             className="bg-gradient-to-r from-green-500 to-green-400 h-6 rounded-full absolute left-0 top-0"
-            style={{ width: `${Math.min(((treeCount || 0) / 10000) * 100, 100)}%` }}
+            style={{ width: `${Math.min(((communityTreeCount || 0) / 10000) * 100, 100)}%` }}
             initial={{ width: 0 }}
-            animate={{ width: `${Math.min(((treeCount || 0) / 10000) * 100, 100)}%` }}
+            animate={{ width: `${Math.min(((communityTreeCount || 0) / 10000) * 100, 100)}%` }}
             transition={{ duration: 1 }}
           />
           <span className="absolute right-4 top-1/2 -translate-y-1/2 text-green-800 font-bold text-sm drop-shadow">
-            {Math.min(((treeCount || 0) / 10000) * 100, 100).toFixed(1)}%
+            {Math.min(((communityTreeCount || 0) / 10000) * 100, 100).toFixed(1)}%
           </span>
         </div>
         <p className="text-sm text-gray-500 mt-2 text-right">
-          {treeCount || 0} trees planted so far
+          {communityTreeCount || 0} trees planted so far
         </p>
       </motion.section>
     </div>

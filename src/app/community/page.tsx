@@ -23,12 +23,25 @@ interface Post {
   badge?: string;
 }
 
+interface Event {
+  id: string;
+  title: string;
+  date: string;
+  location: string;
+  attending: number;
+  active: boolean;
+}
+
 export default function CommunityPage() {
   const { user } = useUser();
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [postError, setPostError] = useState<string | null>(null);
+
+  const [events, setEvents] = useState<Event[]>([]);
+  const [eventsLoading, setEventsLoading] = useState(false);
+  const [eventsError, setEventsError] = useState<string | null>(null);
 
   const fetchPosts = async () => {
     setLoading(true);
@@ -44,6 +57,25 @@ export default function CommunityPage() {
       setError(err.message);
     }
     setLoading(false);
+  };
+
+  const fetchEvents = async () => {
+    setEventsLoading(true);
+    setEventsError(null);
+    try {
+      console.log('Fetching events...');
+      const response = await fetch('/api/events');
+      if (!response.ok) {
+        throw new Error('Failed to fetch events');
+      }
+      const data = await response.json();
+      console.log('Events fetched:', data.events);
+      setEvents(data.events);
+    } catch (err: any) {
+      console.error('Error fetching events:', err);
+      setEventsError(err.message);
+    }
+    setEventsLoading(false);
   };
 
   const handlePostSubmit = async (content: string) => {
@@ -75,26 +107,17 @@ export default function CommunityPage() {
 
   useEffect(() => {
     fetchPosts();
+    fetchEvents();
   }, []);
+
+  const upcomingEvents = events.filter(event => event.active && new Date(event.date) >= new Date());
 
   return (
     <div className="max-w-7xl mx-auto py-8 px-4 space-y-6">
-      <header className="flex items-center justify-between mb-6">
-        <a href="/dashboard" className="text-2xl font-bold text-green-700 hover:text-green-800 transition-colors">
-          🌱 WEGOUP
-        </a>
-        <nav className="hidden md:flex gap-4 text-sm font-medium">
-          <a href="/dashboard" className="hover:text-green-700">Dashboard</a>
-          <a href="/plants" className="hover:text-green-700">Plants</a>
-          <a href="/events" className="hover:text-green-700">Events</a>
-          <a href="/community" className="text-green-700 font-semibold">Community</a>
-          <a href="/profile" className="hover:text-green-700">Profile</a>
-        </nav>
-        <UserButton afterSignOutUrl="/sign-in" />
-      </header>
 
       <HeroBanner />
       <StatsCards />
+
 
       <div className="flex gap-6">
         <main className="flex-1">

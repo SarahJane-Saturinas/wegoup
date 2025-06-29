@@ -1,15 +1,12 @@
-// src/app/layout.tsx
 import { ClerkProvider } from '@clerk/nextjs';
 import { Inter } from 'next/font/google';
 import './globals.css';
 import { ChatProvider } from './components/ChatModal';
+import { metadata } from './metadata';
+import Navbar from './components/Navbar';
+import AuthGate from './components/AuthGate';
 
 const inter = Inter({ subsets: ['latin'] });
-
-export const metadata = {
-  title: 'WEGOUP',
-  description: 'Tree Planting Web App',
-};
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -17,7 +14,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <ChatProvider>
         <html lang="en">
           <body className={inter.className}>
-            {children}
+            <AuthGate>
+              <Navbar />
+              {children}
+            </AuthGate>
           </body>
         </html>
       </ChatProvider>
