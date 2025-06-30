@@ -79,10 +79,16 @@ export default function DashboardPage() {
           headers: {
             'Content-Type': 'application/json',
           },
+          credentials: 'include',
         });
 
         if (!countRes.ok) {
-          const errorData = await countRes.json();
+          let errorData = {};
+          try {
+            errorData = await countRes.json();
+          } catch (e) {
+            console.error('Failed to parse error response:', e);
+          }
           console.error('API error fetching community tree count:', errorData);
           setCommunityTreeCount(null);
         } else {
