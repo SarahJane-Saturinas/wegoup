@@ -33,14 +33,16 @@ export async function POST(request: NextRequest) {
 }
 
 export async function GET(request: NextRequest) {
-  const { userId } = getAuth(request);
-
-  if (!userId) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
   const url = new URL(request.url);
   const community = url.searchParams.get('community');
+
+  if (community !== 'true') {
+    const { userId } = getAuth(request);
+
+    if (!userId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+  }
 
   try {
     if (community === 'true') {
@@ -48,6 +50,11 @@ export async function GET(request: NextRequest) {
       const count = await prisma.tree.count();
       return NextResponse.json({ count });
     } else {
+      // userId is already checked above, safe to use
+      const { userId } = getAuth(request);
+      if (!userId) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      }
       // Return trees for the authenticated user
       const trees = await prisma.tree.findMany({
         where: { userId },

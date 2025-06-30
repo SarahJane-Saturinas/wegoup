@@ -1,5 +1,7 @@
 'use client';
 
+import { useState, useEffect } from 'react';
+
 const quotes = [
   "The best time to plant a tree was 20 years ago. The second best time is now.",
   "A society grows great when old men plant trees whose shade they know they shall never sit in.",
@@ -10,7 +12,11 @@ const quotes = [
 ];
 
 export default function SignInLayout({ children }: { children: React.ReactNode }) {
-  const randomIndex = Math.floor(Math.random() * quotes.length);
+  const [randomIndex, setRandomIndex] = useState<number | null>(null);
+
+  useEffect(() => {
+    setRandomIndex(Math.floor(Math.random() * quotes.length));
+  }, []);
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-amber-50 p-6">
@@ -28,7 +34,7 @@ export default function SignInLayout({ children }: { children: React.ReactNode }
           </p>
           <div className="bg-white rounded-lg p-6 max-w-sm mx-auto md:mx-0 text-green-900">
             <blockquote className="italic mb-4">
-              "{quotes[randomIndex]}"
+              "{randomIndex !== null ? quotes[randomIndex] : ''}"
             </blockquote>
           </div>
         </div>

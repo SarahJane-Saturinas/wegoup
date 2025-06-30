@@ -207,7 +207,7 @@ export default function UserProfilePage() {
         <div className="max-w-4xl mx-auto p-6 rounded-lg shadow-md bg-green-100">
           {/* Profile header */}
           <div className="flex items-center gap-6">
-            {profile?.profileImageUrl ? (
+            {profile.profileImageUrl ? (
               <img
                 src={profile.profileImageUrl}
                 alt={`${profile.fullName} profile`}
