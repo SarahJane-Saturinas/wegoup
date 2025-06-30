@@ -1,17 +1,23 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 
-// Dummy function to get current user id, replace with real auth logic
-async function getCurrentUserId() {
-  // TODO: Implement actual user authentication and return user id
-  return 'some-user-id';
+
+// Modified function to get current user id from request headers for testing
+async function getCurrentUserId(request: Request) {
+  // For testing, get user id from 'x-user-id' header
+  const userId = request.headers.get('x-user-id');
+  if (!userId) {
+    // Return null if no user id provided
+    return null;
+  }
+  return userId;
 }
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
-    const userId = await getCurrentUserId();
+    const userId = await getCurrentUserId(request);
     if (!userId) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return NextResponse.json({ error: 'Unauthorized: Missing user ID in headers' }, { status: 401 });
     }
 
     const friends = await prisma.friend.findMany({
@@ -31,8 +37,8 @@ export async function GET() {
     });
 
     return NextResponse.json({ friends: friends.map((f: any) => f.friend) });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error fetching friends:', error);
-    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+    return NextResponse.json({ error: error.message || 'Internal Server Error' }, { status: 500 });
   }
 }
