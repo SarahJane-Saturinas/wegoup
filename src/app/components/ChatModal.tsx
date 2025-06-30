@@ -49,29 +49,37 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setInput('');
   }, []);
 
-  // Load initial messages from Supabase
+  // Close chat modal on user logout
   useEffect(() => {
-    if (!user || !targetUserId || !isOpen || !supabaseAuth) return;
+    if (!user) {
+      closeChat();
+    }
+  }, [user, closeChat]);
+
+  // Load initial messages from backend API
+  useEffect(() => {
+    if (!user || !targetUserId || !isOpen) return;
 
     const loadMessages = async () => {
-      const { data, error } = await supabaseAuth
-        .from('message')
-        .select('*')
-        .or(`and(senderId.eq.${user.id},receiverId.eq.${targetUserId}),and(senderId.eq.${targetUserId},receiverId.eq.${user.id})`)
-        .order('createdAt', { ascending: true });
-
-      if (error) {
-        console.error('Error loading messages:', error);
-      } else {
-        const formattedMessages = data.map((msg: any) => ({
+      try {
+        const res = await fetch(`/api/messages?otherUserId=${targetUserId}`);
+        if (!res.ok) {
+          const errorData = await res.json();
+          console.error('Error loading messages:', errorData);
+          return;
+        }
+        const data = await res.json();
+        const formattedMessages = data.messages.map((msg: any) => ({
           sender: msg.senderId === user.id ? 'me' : 'them',
           text: msg.content,
         })) as ChatMessage[];
         setMessages(formattedMessages);
+      } catch (error) {
+        console.error('Error loading messages:', error);
       }
     };
     loadMessages();
-  }, [user, targetUserId, isOpen, supabaseAuth]);
+  }, [user, targetUserId, isOpen]);
 
   // Setup Supabase Realtime subscription for chat messages
   useEffect(() => {
@@ -105,20 +113,22 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, [user, targetUserId, isOpen, supabaseAuth]);
 
   const sendMessageHandler = async () => {
-    if (!input.trim() || !user || !targetUserId || !supabaseAuth) return;
+    if (!input.trim() || !user || !targetUserId) return;
 
     const messageContent = input.trim();
     setInput('');
 
     try {
-      const { error } = await supabaseAuth.from('message').insert({
-        senderId: user.id,
-        receiverId: targetUserId,
-        content: messageContent,
+      const res = await fetch('/api/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ receiverId: targetUserId, content: messageContent }),
       });
-
-      if (error) {
-        console.error('Error sending message:', error);
+      if (!res.ok) {
+        const errorData = await res.json();
+        console.error('Error sending message:', errorData);
+      } else {
+        setMessages((currentMessages) => [...currentMessages, { sender: 'me', text: messageContent }]);
       }
     } catch (err) {
       console.error('Unexpected error sending message:', err);
@@ -129,7 +139,7 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
     <ChatContext.Provider value={{ openChat, closeChat }}>
       {children}
       {isOpen && (
-        <div className="fixed bottom-4 right-4 w-96 bg-white border border-gray-300 rounded-xl shadow-lg flex flex-col overflow-hidden z-50">
+        <div className="fixed bottom-4 right-4 w-112 bg-white border border-gray-300 rounded-xl shadow-lg flex flex-col overflow-hidden z-50">
           <div className="bg-green-600 text-white px-4 py-2 font-semibold cursor-pointer rounded-t-xl flex justify-between items-center">
             <span>Chat with {targetUserName}</span>
             <div className="flex gap-2">
@@ -150,8 +160,8 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
             </div>
           </div>
           {!isMinimized && (
-            <div className="flex flex-col flex-1 overflow-hidden h-[400px] rounded-bl-xl rounded-br-xl">
-              <div className="flex-1 overflow-y-auto p-4 flex flex-col space-y-2">
+            <div className="flex flex-col flex-1 overflow-hidden rounded-bl-xl rounded-br-xl" style={{ height: '480px', maxHeight: '480px' }}>
+              <div className="flex-1 overflow-y-auto p-4 flex flex-col space-y-2" style={{ maxHeight: '400px' }}>
                 {messages.map((msg, idx) => (
                   <div
                     key={idx}

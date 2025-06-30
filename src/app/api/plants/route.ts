@@ -1,19 +1,17 @@
 import { NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import prisma from '@/lib/prisma';
 
 export async function GET() {
   try {
-    const plants = await prisma.plant.findMany({
+    const plants = await prisma.tree.findMany({
       select: {
         id: true,
         name: true,
-        scientificName: true,
-        climate: true,
-        imageUrl: true,
-        tags: true,
-        isNative: true,
+        species: true,
+        plantedAt: true,
+        userId: true,
+        createdAt: true,
+        updatedAt: true,
       },
     });
 
