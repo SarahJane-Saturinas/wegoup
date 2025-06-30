@@ -21,7 +21,7 @@ export default function SignInContent({ hideBackground = false, hideHeading = fa
           fontFamily: 'Arial, sans-serif',
         }}
       >
-      {!hideHeading && <h1 style={{ marginBottom: '1rem', color: '#333' }}>Welcome Back! Please Sign In</h1>}
+      {!hideHeading && <h1 style={{ marginBottom: '1rem', color: '#333' }}></h1>}
       <div style={{ width: '100%', maxWidth: '400px', padding: hideBackground ? '0' : '1rem' }}>
         <SignIn redirectUrl="/dashboard" routing="hash" />
       </div>

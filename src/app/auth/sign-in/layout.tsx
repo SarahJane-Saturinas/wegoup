@@ -30,7 +30,7 @@ export default function SignInLayout({ children }: { children: React.ReactNode }
             Join Our Tree Planting Community
           </h2>
           <p className="text-green-900 mb-8">
-            Connect with others, track your impact, and help reforest the planet.
+            Connect with others, join tree planting events, and make a difference for a greener future.
           </p>
           <div className="bg-white rounded-lg p-6 max-w-sm mx-auto md:mx-0 text-green-900">
             <blockquote className="italic mb-4">

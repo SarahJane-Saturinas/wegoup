@@ -211,13 +211,6 @@ export default function DashboardPage() {
             href="/chat"
             color="bg-gradient-to-br from-blue-100 to-blue-200"
           />
-          <ActionCard
-            title="Emerging Tech"
-            description="Explore sustainable tech trends."
-            icon={<Rocket className="w-7 h-7 text-purple-500" />}
-            href="/chat"
-            color="bg-gradient-to-br from-purple-100 to-purple-200"
-          />
         </div>
       </motion.section>
 
