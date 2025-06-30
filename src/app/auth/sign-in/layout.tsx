@@ -1,7 +1,5 @@
 'use client';
 
-import SignInContent from './SignInContent';
-
 const quotes = [
   "The best time to plant a tree was 20 years ago. The second best time is now.",
   "A society grows great when old men plant trees whose shade they know they shall never sit in.",
@@ -35,7 +33,7 @@ export default function SignInLayout({ children }: { children: React.ReactNode }
           </div>
         </div>
         <div className="flex-1 flex justify-center">
-          <SignInContent hideBackground={true} hideHeading={true} />
+          {children}
         </div>
       </div>
     </div>

@@ -12,6 +12,7 @@ interface PostProps {
   comments: number;
   shares: number;
   badge?: string;
+  onLike?: (id: string) => void;
 }
 
 export default function Post({
@@ -26,6 +27,7 @@ export default function Post({
   comments,
   shares,
   badge,
+  onLike,
 }: PostProps) {
   return (
     <article className="bg-white rounded-lg shadow p-4 mb-4 border border-gray-200" aria-label={`Post by ${userName}`}>
@@ -56,7 +58,11 @@ export default function Post({
         />
       )}
       <footer className="flex gap-6 text-sm text-gray-600 mt-2">
-        <button aria-label="Like post" className="hover:text-green-700 flex items-center gap-1">
+        <button
+          aria-label="Like post"
+          className="hover:text-green-700 flex items-center gap-1"
+          onClick={() => onLike && onLike(id)}
+        >
           👍 {likes}
         </button>
         <button aria-label="Comment on post" className="hover:text-green-700 flex items-center gap-1">

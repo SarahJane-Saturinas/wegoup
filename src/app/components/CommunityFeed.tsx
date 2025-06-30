@@ -21,17 +21,49 @@ interface CommunityFeedProps {
   posts: PostData[];
   onPostSubmitAction: (content: string) => void;
   postingError?: string | null;
+  onLikePost?: (id: string) => void;
 }
 
-export default function CommunityFeed({ posts, onPostSubmitAction, postingError }: CommunityFeedProps) {
+
+export default function CommunityFeed({ posts, onPostSubmitAction, postingError, onLikePost }: CommunityFeedProps) {
   const [postContent, setPostContent] = useState('');
 
+  const allowedKeywords = [
+    'tree', 'plant', 'garden', 'seedling', 'forest', 'nature', 'environment',
+    'green', 'grow', 'planting', 'sapling', 'tree planting', 'compost', 'soil',
+    'prune', 'mulch', 'biodiversity', 'conservation', 'sustainability'
+  ];
+
+  const disallowedWords = [
+    'kill', 'harm', 'violence', 'attack', 'bomb', 'shoot', 'gun', 'weapon',
+    'fight', 'abuse', 'terror', 'hate', 'murder', 'assault', 'bombing', 'explosion'
+  ];
+
+  function containsAllowedKeyword(content: string): boolean {
+    const lowerContent = content.toLowerCase();
+    return allowedKeywords.some(keyword => lowerContent.includes(keyword));
+  }
+
+  function containsDisallowedWord(content: string): boolean {
+    const lowerContent = content.toLowerCase();
+    return disallowedWords.some(word => lowerContent.includes(word));
+  }
+
   const handlePost = () => {
-    if (postContent.trim() === '') {
+    const trimmedContent = postContent.trim();
+    if (trimmedContent === '') {
       alert('Post content cannot be empty.');
       return;
     }
-    onPostSubmitAction(postContent);
+    if (containsDisallowedWord(trimmedContent)) {
+      alert('Your post contains disallowed words related to violence or harm. Please revise your content.');
+      return;
+    }
+    if (!containsAllowedKeyword(trimmedContent)) {
+      alert('Please ensure your post is related to tree planting activities or similar topics.');
+      return;
+    }
+    onPostSubmitAction(trimmedContent);
     setPostContent('');
   };
 
@@ -76,6 +108,7 @@ export default function CommunityFeed({ posts, onPostSubmitAction, postingError 
             comments={p.comments}
             shares={p.shares}
             badge={p.badge}
+            onLike={onLikePost}
           />
         ))}
       </div>

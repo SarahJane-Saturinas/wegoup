@@ -1,22 +1,34 @@
-import { NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
+import { NextResponse, NextRequest } from 'next/server';
+import { getAuth } from '@clerk/nextjs/server';
+import prisma from '@/lib/prisma';
 
-const prisma = new PrismaClient();
+export async function GET(request: NextRequest) {
+  const { userId } = getAuth(request);
 
-export async function GET() {
+  if (!userId) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
   try {
-    // For demo, returning static progress data; replace with real user progress logic
+    // Query count of trees planted by the user
+    const treesPlantedCount = await prisma.tree.count({
+      where: { userId },
+    });
+
+    // TODO: Add logic for events organized by user when available
+    const eventsOrganizedCount = 0;
+
     const progressData = [
       {
         title: 'Tree Planter',
-        progress: 12,
+        progress: treesPlantedCount,
         goal: 25,
         description: 'Plant 25 trees to unlock next badge',
         color: 'bg-green-600',
       },
       {
         title: 'Community Leader',
-        progress: 7,
+        progress: eventsOrganizedCount,
         goal: 10,
         description: 'Organize 10 events to unlock badge',
         color: 'bg-yellow-600',

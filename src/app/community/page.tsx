@@ -32,6 +32,31 @@ interface Event {
   active: boolean;
 }
 
+const forbiddenWords = [
+  'violence', 'harm', 'kill', 'attack', 'abuse', 'terror', 'weapon', 'fight', 'blood', 'gun', 'bomb', 'shoot', 'murder'
+];
+
+const allowedKeywords = [
+  'tree', 'plant', 'planting', 'seedling', 'forest', 'garden', 'nature', 'environment', 'green', 'sustainability', 'ecology', 'conservation', 'climate'
+];
+
+function validatePostContent(content: string): boolean {
+  const contentLower = content.toLowerCase();
+  // Check for forbidden words
+  for (const word of forbiddenWords) {
+    if (contentLower.includes(word)) {
+      return false;
+    }
+  }
+  // Check for at least one allowed keyword
+  for (const keyword of allowedKeywords) {
+    if (contentLower.includes(keyword)) {
+      return true;
+    }
+  }
+  return false;
+}
+
 export default function CommunityPage() {
   const { user } = useUser();
   const [posts, setPosts] = useState<Post[]>([]);
@@ -87,6 +112,10 @@ export default function CommunityPage() {
       setPostError('Post content cannot be empty.');
       return;
     }
+    if (!validatePostContent(content)) {
+      setPostError('Post content must relate to tree planting and not contain violence or harm.');
+      return;
+    }
     setPostError(null);
 
     try {
@@ -105,6 +134,22 @@ export default function CommunityPage() {
     }
   };
 
+  const onLikePost = async (postId: string) => {
+    try {
+      const response = await fetch(`/api/posts`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ postId }),
+      });
+      if (!response.ok) {
+        throw new Error('Failed to like post');
+      }
+      await fetchPosts();
+    } catch (err: any) {
+      console.error('Error liking post:', err);
+    }
+  };
+
   useEffect(() => {
     fetchPosts();
     fetchEvents();
@@ -118,14 +163,13 @@ export default function CommunityPage() {
       <HeroBanner />
       <StatsCards />
 
-
       <div className="flex gap-6">
         <main className="flex-1">
           {loading && <p>Loading posts...</p>}
           {!loading && error && <p className="text-red-600">Error loading posts: {error}</p>}
           {!loading && !error && posts.length === 0 && <p>No posts found.</p>}
           {!loading && !error && (
-            <CommunityFeed posts={posts} onPostSubmitAction={handlePostSubmit} postingError={postError} />
+            <CommunityFeed posts={posts} onPostSubmitAction={handlePostSubmit} postingError={postError} onLikePost={onLikePost} />
           )}
         </main>
         <RightSidebar />

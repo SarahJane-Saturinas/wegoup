@@ -49,7 +49,11 @@ export default function UserProfilePage() {
   const [loadingPosts, setLoadingPosts] = useState(true);
   const [errorPosts, setErrorPosts] = useState<string | null>(null);
 
+  const [postingError, setPostingError] = useState<string | null>(null);
+
   const [activeTab, setActiveTab] = useState<Tab>('Posts');
+
+  // Removed local allowedKeywords and disallowedKeywords arrays as validation is done server-side
 
   // Fetch user profile from Clerk users API and additional data
   useEffect(() => {
@@ -98,28 +102,14 @@ export default function UserProfilePage() {
       setLoadingPosts(true);
       setErrorPosts(null);
       try {
-        const { data, error } = await supabase
-          .from('posts')
-          .select('*')
-          .eq('user_id', userId)
-          .order('created_at', { ascending: false });
-
-        if (error) {
-          setErrorPosts(error.message);
+        const response = await fetch(`/api/posts?userId=${userId}`);
+        if (!response.ok) {
+          const errorData = await response.json();
+          setErrorPosts(errorData.error || 'Failed to load posts.');
           setPosts([]);
         } else {
-          const formattedPosts = data.map((p: any) => ({
-            id: p.id,
-            userName: profile?.fullName || 'Unknown',
-            userInitial: profile?.fullName ? profile.fullName.charAt(0) : 'U',
-            content: p.content,
-            createdAt: p.created_at,
-            likes: 0,
-            comments: 0,
-            shares: 0,
-            badge: 'Plant Expert',
-          }));
-          setPosts(formattedPosts);
+          const data = await response.json();
+          setPosts(data);
         }
       } catch (err) {
         setErrorPosts('Failed to load posts.');
@@ -145,19 +135,61 @@ export default function UserProfilePage() {
 
   const { openChat } = useChat();
 
-  const handlePostSubmit = (content: string) => {
-    const newPost: PostData = {
-      id: `p${posts.length + 1}`,
-      userName: profile?.fullName || 'Unknown',
-      userInitial: profile?.fullName ? profile.fullName.charAt(0) : 'U',
-      content,
-      createdAt: new Date().toISOString(),
-      likes: 0,
-      comments: 0,
-      shares: 0,
-      badge: 'Plant Expert',
-    };
-    setPosts([newPost, ...posts]);
+  const onLikePost = (postId: string) => {
+    setPosts((prevPosts) =>
+      prevPosts.map((post) =>
+        post.id === postId ? { ...post, likes: post.likes + 1 } : post
+      )
+    );
+  };
+
+  const handlePostSubmit = async (content: string) => {
+    setPostingError(null);
+
+    // Client-side validation based on server-side rules
+    const contentLower = content.toLowerCase();
+
+    const disallowedKeywords = [
+      'kill', 'harm', 'violence', 'attack', 'abuse', 'murder', 'fight', 'bomb', 'gun', 'weapon', 'terror', 'hate', 'racist', 'racism', 'slavery', 'assault', 'crime', 'drugs', 'terrorism', 'bombing', 'shooting', 'explosion', 'abusive', 'threat', 'bully', 'bullying'
+    ];
+
+    const allowedKeywords = [
+      'tree', 'plant', 'planting', 'seedling', 'forest', 'garden', 'nature', 'environment', 'green', 'sustainability', 'conservation', 'earth', 'soil', 'water', 'climate', 'wildlife', 'biodiversity', 'ecosystem', 'carbon', 'pollution', 'reforestation', 'habitat', 'growth', 'sprout', 'sapling'
+    ];
+
+    for (const word of disallowedKeywords) {
+      if (contentLower.includes(word)) {
+        setPostingError(`Post contains disallowed word: "${word}"`);
+        return;
+      }
+    }
+
+    const hasAllowed = allowedKeywords.some(word => contentLower.includes(word));
+    if (!hasAllowed) {
+      setPostingError('Post content must be related to tree planting or environmental activities.');
+      return;
+    }
+
+    try {
+      const response = await fetch('/api/posts', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ content }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        setPostingError(errorData.error || 'Failed to submit post.');
+        return;
+      }
+
+      const newPost: PostData = await response.json();
+      setPosts([newPost, ...posts]);
+    } catch (error) {
+      setPostingError('Failed to submit post due to network error.');
+    }
   };
 
   if (loadingProfile) {
@@ -171,9 +203,9 @@ export default function UserProfilePage() {
   return (
     <ChatProvider>
       <div className="max-w-4xl mx-auto h-screen overflow-auto px-4 bg-green-100">
-        {/* Removed cover photo, replaced with light green card */} 
+        {/* Removed cover photo, replaced with light green card */}
         <div className="max-w-4xl mx-auto p-6 rounded-lg shadow-md bg-green-100">
-          {/* Profile header */} 
+          {/* Profile header */}
           <div className="flex items-center gap-6">
             {profile.profileImageUrl ? (
               <img
@@ -238,7 +270,7 @@ export default function UserProfilePage() {
               {loadingPosts && <p>Loading posts...</p>}
               {errorPosts && <p className="text-red-600">{errorPosts}</p>}
               {!loadingPosts && !errorPosts && (
-                <CommunityFeed posts={posts} onPostSubmitAction={handlePostSubmit} />
+                <CommunityFeed posts={posts} onPostSubmitAction={handlePostSubmit} postingError={postingError} onLikePost={onLikePost} />
               )}
             </>
           )}
@@ -249,3 +281,4 @@ export default function UserProfilePage() {
       </div>
     </ChatProvider>
   );
+}

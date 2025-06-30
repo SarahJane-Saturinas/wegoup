@@ -5,6 +5,33 @@ import { getAuth } from '@clerk/nextjs/server';
 const CLERK_API_KEY = process.env.CLERK_SECRET_KEY;
 const CLERK_API_URL = 'https://api.clerk.com/v1/users';
 
+const allowedKeywords = [
+  'tree', 'plant', 'planting', 'seedling', 'forest', 'garden', 'nature', 'environment', 'green', 'sustainability', 'conservation', 'earth', 'soil', 'water', 'climate', 'wildlife', 'biodiversity', 'ecosystem', 'carbon', 'pollution', 'reforestation', 'habitat', 'growth', 'sprout', 'sapling'
+];
+
+const disallowedKeywords = [
+  'kill', 'harm', 'violence', 'attack', 'abuse', 'murder', 'fight', 'bomb', 'gun', 'weapon', 'terror', 'hate', 'racist', 'racism', 'slavery', 'assault', 'crime', 'drugs', 'terrorism', 'bombing', 'shooting', 'explosion', 'abusive', 'threat', 'bully', 'bullying'
+];
+
+function validatePostContent(content: string): { valid: boolean; message?: string } {
+  const contentLower = content.toLowerCase();
+
+  // Check for disallowed keywords
+  for (const word of disallowedKeywords) {
+    if (contentLower.includes(word)) {
+      return { valid: false, message: `Post contains disallowed word: "${word}"` };
+    }
+  }
+
+  // Check for at least one allowed keyword
+  const hasAllowed = allowedKeywords.some(word => contentLower.includes(word));
+  if (!hasAllowed) {
+    return { valid: false, message: 'Post content must be related to tree planting or environmental activities.' };
+  }
+
+  return { valid: true };
+}
+
 export async function POST(request: NextRequest) {
   try {
     const { userId } = getAuth(request);
@@ -17,6 +44,12 @@ export async function POST(request: NextRequest) {
 
     if (!content || content.trim() === '') {
       return NextResponse.json({ error: 'Post content cannot be empty' }, { status: 400 });
+    }
+
+    // Validate content
+    const validation = validatePostContent(content);
+    if (!validation.valid) {
+      return NextResponse.json({ error: validation.message }, { status: 400 });
     }
 
     let user: any = await prisma.user.findUnique({
@@ -148,7 +181,7 @@ export async function GET(request: NextRequest) {
         createdAt: p.createdAt.toISOString(),
         location: undefined,
         imageUrl: undefined,
-        likes: 0,
+        likes: p.likes || 0,
         comments: 0,
         shares: 0,
         badge: undefined,
@@ -158,6 +191,37 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(formattedPosts);
   } catch (error: any) {
     console.error('Error fetching posts:', error);
+    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+  }
+}
+
+export async function PATCH(request: NextRequest) {
+  try {
+    const { userId } = getAuth(request);
+    if (!userId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const body = await request.json();
+    const { postId } = body;
+
+    if (!postId) {
+      return NextResponse.json({ error: 'Post ID is required' }, { status: 400 });
+    }
+
+    // Increment like count atomically
+    const updatedPost = await prisma.post.update({
+      where: { id: postId },
+      data: {
+        likes: {
+          increment: 1,
+        },
+      },
+    });
+
+    return NextResponse.json(updatedPost);
+  } catch (error: any) {
+    console.error('Error liking post:', error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 }
