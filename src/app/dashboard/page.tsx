@@ -7,7 +7,7 @@ import { motion } from 'framer-motion';
 import { UserRound, MapPin, Award, TreePalm, Bot, Rocket } from 'lucide-react';
 
 export default function DashboardPage() {
-  const { user } = useUser();
+  const { isLoaded, isSignedIn, user } = useUser();
   const [treeCount, setTreeCount] = useState<number | null>(null);
   const [locationCount, setLocationCount] = useState<number | null>(null);
   const [badgeCount, setBadgeCount] = useState(2); // placeholder
@@ -40,11 +40,14 @@ export default function DashboardPage() {
   const [currentTipIndex, setCurrentTipIndex] = useState(0);
 
   useEffect(() => {
-    console.log('Dashboard useEffect triggered, user:', user);
-    if (!user) return;
+    if (!isLoaded) return; // Wait for user to load
+    if (!isSignedIn) {
+      // Redirect to sign-in page or home if not signed in
+      window.location.href = '/auth/sign-in';
+      return;
+    }
 
     const fetchData = async () => {
-      console.log('Fetching tree data for user:', user.id);
       try {
         const res = await fetch('/api/trees', {
           method: 'GET',
@@ -63,8 +66,6 @@ export default function DashboardPage() {
         }
 
         const data = await res.json();
-
-        console.log('Fetched user trees:', data);
 
         // Since location is not a field, we can count unique species or just count trees
         const uniqueSpecies = new Set(
@@ -104,7 +105,7 @@ export default function DashboardPage() {
     };
 
     fetchData();
-  }, [user]);
+  }, [isLoaded, isSignedIn]);
 
   // Effect to cycle through tips every 5 seconds
   useEffect(() => {
@@ -116,6 +117,14 @@ export default function DashboardPage() {
   }, [tips.length]);
 
   const isLoading = treeCount === null || locationCount === null;
+
+  if (!isLoaded) {
+    return <div>Loading...</div>;
+  }
+
+  if (!isSignedIn) {
+    return <div>Redirecting to sign-in...</div>;
+  }
 
   return (
     <div className="space-y-12 px-6 py-10 max-w-6xl mx-auto bg-gradient-to-br from-green-50 via-white to-green-100 min-h-screen">
