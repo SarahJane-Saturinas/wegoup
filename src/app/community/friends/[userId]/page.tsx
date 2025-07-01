@@ -201,47 +201,45 @@ export default function UserProfilePage() {
   }
 
   return (
-    <ChatProvider>
-      <div className="max-w-4xl mx-auto h-screen overflow-auto px-4 bg-green-100">
-        {/* Removed cover photo, replaced with light green card */}
-        <div className="max-w-4xl mx-auto p-6 rounded-lg shadow-md bg-green-100">
-          {/* Profile header */}
-          <div className="flex items-center gap-6">
-            {profile.profileImageUrl ? (
-              <img
-                src={profile.profileImageUrl}
-                alt={`${profile.fullName} profile`}
-                className="w-32 h-32 rounded-full border-4 border-white object-cover"
-              />
-            ) : (
-              <div className="w-32 h-32 rounded-full border-4 border-white bg-green-400 flex items-center justify-center text-5xl text-white">
-                {profile.fullName.charAt(0)}
-              </div>
-            )}
-            <div>
-              <h1 className="text-4xl font-bold">{profile.fullName}</h1>
-              <div className="flex items-center gap-4 mt-2">
-                {/* Removed friends count and mutual friends */}
-                {/* Removed friends list avatars */}
-              </div>
+    <div className="max-w-4xl mx-auto h-screen overflow-auto px-4 bg-green-100">
+      {/* Removed cover photo, replaced with light green card */}
+      <div className="max-w-4xl mx-auto p-6 rounded-lg shadow-md bg-green-100">
+        {/* Profile header */}
+        <div className="flex items-center gap-6">
+          {profile.profileImageUrl ? (
+            <img
+              src={profile.profileImageUrl}
+              alt={`${profile.fullName} profile`}
+              className="w-32 h-32 rounded-full border-4 border-white object-cover"
+            />
+          ) : (
+            <div className="w-32 h-32 rounded-full border-4 border-white bg-green-400 flex items-center justify-center text-5xl text-white">
+              {profile.fullName.charAt(0)}
             </div>
-            <div className="ml-auto flex gap-4">
-              <button
-                onClick={toggleFriend}
-                className={`px-4 py-2 rounded text-white ${
-                  profile.isFriend ? 'bg-gray-400 hover:bg-gray-500' : 'bg-green-600 hover:bg-green-700'
-                }`}
-              >
-                {profile.isFriend ? 'Friends' : 'Add Friend'}
-              </button>
+          )}
+          <div>
+            <h1 className="text-4xl font-bold">{profile.fullName}</h1>
+            <div className="flex items-center gap-4 mt-2">
+              {/* Removed friends count and mutual friends */}
+              {/* Removed friends list avatars */}
             </div>
+          </div>
+          <div className="ml-auto flex gap-4">
             <button
-              className="px-4 py-2 rounded bg-green-600 hover:bg-green-700 text-white"
-              onClick={() => openChat(profile.id, profile.fullName)}
+              onClick={toggleFriend}
+              className={`px-4 py-2 rounded text-white ${
+                profile.isFriend ? 'bg-gray-400 hover:bg-gray-500' : 'bg-green-600 hover:bg-green-700'
+              }`}
             >
-              Message
+              {profile.isFriend ? 'Friends' : 'Add Friend'}
             </button>
           </div>
+          <button
+            className="px-4 py-2 rounded bg-green-600 hover:bg-green-700 text-white"
+            onClick={() => openChat(profile.id, profile.fullName)}
+          >
+            Message
+          </button>
         </div>
 
         {/* Removed local chat modal */}
@@ -279,6 +277,6 @@ export default function UserProfilePage() {
           )}
         </div>
       </div>
-    </ChatProvider>
+    </div>
   );
 }
