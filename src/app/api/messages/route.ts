@@ -3,12 +3,15 @@ import prisma from '@/lib/prisma';
 
 import { auth } from '@clerk/nextjs/server';
 
+import { syncClerkUsersToPrisma } from '../syncUsers';
 
 // Updated function to get current user id from Clerk auth or fallback to DB
 async function getCurrentUserId() {
   const authResult = await auth();
   const userId = authResult.userId;
   if (userId) {
+    // Ensure user exists in Prisma DB
+    await syncClerkUsersToPrisma();
     return userId;
   }
   // Fallback to first user in DB

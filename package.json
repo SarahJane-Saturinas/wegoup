@@ -11,6 +11,7 @@
     "vercel-build": "prisma generate && next build"
   },
   "dependencies": {
+    "@clerk/clerk-sdk-node": "^4.13.23",
     "@clerk/nextjs": "^6.22.0",
     "@prisma/client": "^6.10.0",
     "@supabase/auth-helpers-nextjs": "^0.10.0",
